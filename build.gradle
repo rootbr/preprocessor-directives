@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+    id 'pmd'
+    id "com.github.spotbugs" version "2.0.0"
+    id 'checkstyle'
+}
+
+group 'org.rootbr'
+version '0.1-SNAPSHOT'
+
+sourceCompatibility = 11
+
+repositories {
+    mavenCentral()
+}
+
+test {
+    useJUnitPlatform()
+}
+
+pmd {
+    ignoreFailures = true
+}
+
+dependencies {
+    implementation "commons-cli:commons-cli:1.4"
+    implementation "org.slf4j:slf4j-api:1.7.26"
+    implementation "ch.qos.logback:logback-classic:1.2.3"
+
+    testCompile('org.junit.jupiter:junit-jupiter-api:5.4.2')
+    testCompile('org.junit.jupiter:junit-jupiter-params:5.4.2')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.4.2')
+    testCompile 'org.assertj:assertj-core:3.9.1'
+    testCompile 'org.mockito:mockito-core:2.27.0'
+    testCompile 'org.mockito:mockito-all:1.9.5'
+    testCompile 'org.mockito:junit-jupiter:2.20.0'
+}
