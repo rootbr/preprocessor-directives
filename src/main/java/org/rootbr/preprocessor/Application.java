@@ -47,21 +47,24 @@ public class Application {
 
     try {
       final var parse = new DefaultParser().parse(options, args);
+
       try (InputStream input = new FileInputStream(parse.getOptionValue(PATH_TO_DEFINED_SYMBOLS))) {
         // TODO add description
         DEFINED_SYMBOLS.load(new InputStreamReader(input, Charset.forName("UTF-8")));
       }
-      final var pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 10);
+
+      final var threads = Runtime.getRuntime().availableProcessors() * 10;
+      final var pool = Executors.newFixedThreadPool(threads);
+
       try (Stream<Path> walk = Files.walk(Paths.get(parse.getOptionValue(PATH_TO_SOURCE)))) {
         walk.filter(f -> Files.isRegularFile(f) && f.getFileName().toString().endsWith(".cs"))
-            .forEach(f -> pool.execute(() -> {
-              System.out.println(f);
-            }));
+            .forEach(f -> pool.execute(() -> System.out.println(f)));
       } catch (IOException e) {
         log.error(e.getMessage());
       } finally {
         pool.shutdown();
       }
+
     } catch (ParseException e) {
       new HelpFormatter().printHelp("preprocessor-directives-utility", options);
       exitApplication(e.getMessage());
