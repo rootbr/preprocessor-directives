@@ -21,9 +21,9 @@ import org.slf4j.LoggerFactory;
 
 public class Application {
   private static final Logger log = LoggerFactory.getLogger(Application.class);
-  public static final String PATH_TO_SOURCE = "path-to-source";
-  public static final String PATH_TO_DEFINED_SYMBOLS = "path-to-defined-symbols";
-  public static final String PATH_TO_OUTPUT = "path-to-output";
+  private static final String PATH_TO_SOURCE = "path-to-source";
+  private static final String PATH_TO_DEFINED_SYMBOLS = "path-to-defined-symbols";
+  private static final String PATH_TO_OUTPUT = "path-to-output";
   public static final Properties DEFINED_SYMBOLS = new Properties();
 
   public static void main(String[] args) {

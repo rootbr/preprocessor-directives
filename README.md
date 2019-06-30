@@ -88,6 +88,9 @@ gradle -version
 gradle build
 ```
 
+```
+--path-to-source /home/aleksei/RiderProjects/roslyn  --path-to-output /home/aleksei/roslyn-results --path-to-defined-symbols tests/defined-symbols.properties
+```
 
 ## License
 

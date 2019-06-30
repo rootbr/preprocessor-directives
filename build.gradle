@@ -18,6 +18,11 @@ test {
     useJUnitPlatform()
 }
 
+tasks.withType(com.github.spotbugs.SpotBugsTask) {
+    reports.xml.enabled = false
+    reports.html.enabled = true
+}
+
 pmd {
     ignoreFailures = true
 }
