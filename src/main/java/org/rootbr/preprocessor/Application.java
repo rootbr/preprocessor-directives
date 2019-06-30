@@ -5,7 +5,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.stream.Stream;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
@@ -45,6 +50,17 @@ public class Application {
       try (InputStream input = new FileInputStream(parse.getOptionValue(PATH_TO_DEFINED_SYMBOLS))) {
         // TODO add description
         DEFINED_SYMBOLS.load(new InputStreamReader(input, Charset.forName("UTF-8")));
+      }
+      final var pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 10);
+      try (Stream<Path> walk = Files.walk(Paths.get(parse.getOptionValue(PATH_TO_SOURCE)))) {
+        walk.filter(f -> Files.isRegularFile(f) && f.getFileName().toString().endsWith(".cs"))
+            .forEach(f -> pool.execute(() -> {
+              System.out.println(f);
+            }));
+      } catch (IOException e) {
+        log.error(e.getMessage());
+      } finally {
+        pool.shutdown();
       }
     } catch (ParseException e) {
       new HelpFormatter().printHelp("preprocessor-directives-utility", options);
