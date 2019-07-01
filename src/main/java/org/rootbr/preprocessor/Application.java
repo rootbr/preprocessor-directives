@@ -33,7 +33,7 @@ public class Application {
 
   public static void main(String[] args) throws IOException {
 
-    CommandLine parse = parseComandLine(args);
+    CommandLine parse = parseCommandLine(args);
 
     definedSymbols = new DefinedSymbols(parse.getOptionValue(PATH_TO_DEFINED_SYMBOLS));
 
@@ -95,7 +95,7 @@ public class Application {
     }
   }
 
-  private static CommandLine parseComandLine(String[] args) {
+  private static CommandLine parseCommandLine(String[] args) {
     Options options = new Options()
         .addOption(Option.builder()
             .longOpt(PATH_TO_SOURCE)
