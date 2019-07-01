@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
@@ -28,6 +29,54 @@ public class Application {
   private static DefinedSymbols definedSymbols;
 
   public static void main(String[] args) throws IOException {
+
+    CommandLine parse = parseComandLine(args);
+
+    definedSymbols = new DefinedSymbols(parse.getOptionValue(PATH_TO_DEFINED_SYMBOLS));
+
+    final var threads = Runtime.getRuntime().availableProcessors() * 10;
+    final var pool = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
+
+    final Pattern pattern = Pattern.compile("^[\\s\\t]*#if[\\s\\t]+(!*?)(\\w+?)[\\s\\t]*$");
+    try (Stream<Path> walk = Files.walk(Paths.get(parse.getOptionValue(PATH_TO_SOURCE)))) {
+      walk.filter(f -> Files.isRegularFile(f) && f.toFile().getAbsolutePath().endsWith(".cs"))
+          .forEach(f -> pool.execute(() -> {
+            try (Stream<String> stream = Files.lines(f, Charset.forName("UTF-8"))) {
+              stream.forEachOrdered(s -> {
+                Matcher matcher = pattern.matcher(s);
+                if (matcher.find()) {
+                  final var numberOfNegation = matcher.group(1).length();
+                  final var key = matcher.group(2);
+                  if (is(key, numberOfNegation)) {
+                    System.out.println(f.toString() + " " + s);
+                  }
+                }
+              });
+            } catch (MalformedInputException e) {
+              log.error(e.getMessage(), e);
+            } catch (IOException e) {
+              log.warn(e.getMessage(), e);
+            }
+          }));
+    } catch (IOException e) {
+      log.error(e.getMessage(), e);
+    }
+    awaitPool(pool);
+  }
+
+  private static void awaitPool(ThreadPoolExecutor pool) {
+    pool.shutdown();
+    try {
+      if (!pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)) {
+        pool.shutdownNow();
+      }
+    } catch (InterruptedException ex) {
+      pool.shutdownNow();
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  private static CommandLine parseComandLine(String[] args) {
     Options options = new Options()
         .addOption(Option.builder()
             .longOpt(PATH_TO_SOURCE)
@@ -47,50 +96,12 @@ public class Application {
         );
 
     try {
-      final var parse = new DefaultParser().parse(options, args);
-
-      definedSymbols = new DefinedSymbols(parse.getOptionValue(PATH_TO_DEFINED_SYMBOLS));
-
-      final var threads = Runtime.getRuntime().availableProcessors() * 10;
-      final var pool = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
-
-      final Pattern pattern = Pattern.compile("^[\\s\\t]*#if[\\s\\t]+(!*?)(\\w+?)[\\s\\t]*$");
-      try (Stream<Path> walk = Files.walk(Paths.get(parse.getOptionValue(PATH_TO_SOURCE)))) {
-        walk.filter(f -> Files.isRegularFile(f) && f.toFile().getAbsolutePath().endsWith(".cs"))
-            .forEach(f -> pool.execute(() -> {
-              try (Stream<String> stream = Files.lines(f, Charset.forName("UTF-8"))) {
-                stream.forEachOrdered(s -> {
-                  Matcher matcher = pattern.matcher(s);
-                  if (matcher.find()) {
-                    final var numberOfNegation = matcher.group(1).length();
-                    final var key = matcher.group(2);
-                    if (is(key, numberOfNegation)) {
-                      System.out.println(f.toString() + " " + s);
-                    }
-                  }
-                });
-              } catch (MalformedInputException e) {
-                log.error(e.getMessage(), e);
-              } catch (IOException e) {
-                log.warn(e.getMessage(), e);
-              }
-            }));
-      } catch (IOException e) {
-        log.error(e.getMessage(), e);
-      }
-      pool.shutdown();
-      try {
-        if (!pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)) {
-          pool.shutdownNow();
-        }
-      } catch (InterruptedException ex) {
-        pool.shutdownNow();
-        Thread.currentThread().interrupt();
-      }
+      return new DefaultParser().parse(options, args);
     } catch (ParseException e) {
       new HelpFormatter().printHelp("preprocessor-directives-utility", options);
       log.error(e.getMessage(), e);
       System.exit(-1);
+      return null;
     }
   }
 
