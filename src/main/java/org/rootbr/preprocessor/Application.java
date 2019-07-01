@@ -1,8 +1,8 @@
 package org.rootbr.preprocessor;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
-import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,6 +18,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.mozilla.universalchardet.UniversalDetector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +28,8 @@ public class Application {
   private static final String PATH_TO_DEFINED_SYMBOLS = "path-to-defined-symbols";
   private static final String PATH_TO_OUTPUT = "path-to-output";
   private static DefinedSymbols definedSymbols;
+  private static final Pattern pattern =
+      Pattern.compile("^[\\s\\t]*#if[\\s\\t]+(!*?)(\\w+?)[\\s\\t]*$");
 
   public static void main(String[] args) throws IOException {
 
@@ -37,23 +40,26 @@ public class Application {
     final var threads = Runtime.getRuntime().availableProcessors() * 10;
     final var pool = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
 
-    final Pattern pattern = Pattern.compile("^[\\s\\t]*#if[\\s\\t]+(!*?)(\\w+?)[\\s\\t]*$");
+
     try (Stream<Path> walk = Files.walk(Paths.get(parse.getOptionValue(PATH_TO_SOURCE)))) {
       walk.filter(f -> Files.isRegularFile(f) && f.toFile().getAbsolutePath().endsWith(".cs"))
           .forEach(f -> pool.execute(() -> {
             try (Stream<String> stream = Files.lines(f, Charset.forName("UTF-8"))) {
-              stream.forEachOrdered(s -> {
-                Matcher matcher = pattern.matcher(s);
-                if (matcher.find()) {
-                  final var numberOfNegation = matcher.group(1).length();
-                  final var key = matcher.group(2);
-                  if (is(key, numberOfNegation)) {
-                    System.out.println(f.toString() + " " + s);
+              processingFile(stream);
+            } catch (UncheckedIOException e) {
+              try {
+                String encoding = UniversalDetector.detectCharset(f);
+                if (encoding != null) {
+                  System.out.println("Detected encoding = " + encoding + " for file: " + f);
+                  try (Stream<String> stream = Files.lines(f, Charset.forName(encoding))) {
+                    processingFile(stream);
                   }
+                } else {
+                  log.warn("No encoding detected for file: " + f);
                 }
-              });
-            } catch (MalformedInputException e) {
-              log.error(e.getMessage(), e);
+              } catch (IOException ex) {
+                log.error(e.getMessage(), e);
+              }
             } catch (IOException e) {
               log.warn(e.getMessage(), e);
             }
@@ -62,6 +68,19 @@ public class Application {
       log.error(e.getMessage(), e);
     }
     awaitPool(pool);
+  }
+
+  private static void processingFile(Stream<String> stream) {
+    stream.forEachOrdered(s -> {
+      Matcher matcher = pattern.matcher(s);
+      if (matcher.find()) {
+        final var numberOfNegation = matcher.group(1).length();
+        final var key = matcher.group(2);
+        if (is(key, numberOfNegation)) {
+          System.out.println(s);
+        }
+      }
+    });
   }
 
   private static void awaitPool(ThreadPoolExecutor pool) {
