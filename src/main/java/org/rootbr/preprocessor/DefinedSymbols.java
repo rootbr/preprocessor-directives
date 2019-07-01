@@ -16,7 +16,7 @@ public class DefinedSymbols {
     }
   }
 
-  public boolean prop(final String propertyName) {
+  public Boolean prop(final String propertyName) {
     return Boolean.parseBoolean(properties.getProperty(propertyName));
   }
 }
