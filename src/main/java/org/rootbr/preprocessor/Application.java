@@ -54,15 +54,15 @@ public class Application {
       final var threads = Runtime.getRuntime().availableProcessors() * 10;
       final var pool = Executors.newFixedThreadPool(threads);
 
-      Pattern pattern = Pattern.compile("^[\\s\\t]*#if[\\s\\t]+!*\\w+[\\s\\t]*$");
+      Pattern pattern = Pattern.compile("^[\\s\\t]*#if[\\s\\t]+(!*?)(\\w+?)[\\s\\t]*$");
       try (Stream<Path> walk = Files.walk(Paths.get(parse.getOptionValue(PATH_TO_SOURCE)), FileVisitOption.FOLLOW_LINKS)) {
         walk.filter(f -> Files.isRegularFile(f) && f.toFile().getAbsolutePath().endsWith(".cs"))
             .forEach(f -> pool.execute(() -> {
               try (Stream<String> stream = Files.lines(f, Charset.forName("UTF-8"))) {
                 stream.forEachOrdered(s -> {
                   Matcher matcher = pattern.matcher(s);
-                  if (matcher.matches()) {
-                    System.out.println(f.toString() + " " + s);
+                  if (matcher.find()) {
+                    System.out.println(f.toString() + " " + matcher.group(1) + " " + matcher.group(2));
                   }
                 });
               } catch (MalformedInputException e) {
