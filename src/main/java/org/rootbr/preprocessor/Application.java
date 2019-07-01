@@ -50,12 +50,12 @@ public class Application {
               try {
                 String encoding = UniversalDetector.detectCharset(f);
                 if (encoding != null) {
-                  System.out.println("Detected encoding = " + encoding + " for file: " + f);
+                  log.info("Detected encoding = {} for file: {}", encoding, f);
                   try (Stream<String> stream = Files.lines(f, Charset.forName(encoding))) {
                     processingFile(stream);
                   }
                 } else {
-                  log.warn("No encoding detected for file: " + f);
+                  log.warn("No encoding detected for file: {}", f);
                 }
               } catch (IOException ex) {
                 log.error(e.getMessage(), e);
@@ -77,7 +77,7 @@ public class Application {
         final var numberOfNegation = matcher.group(1).length();
         final var key = matcher.group(2);
         if (is(key, numberOfNegation)) {
-          System.out.println(s);
+          log.info(s);
         }
       }
     });
