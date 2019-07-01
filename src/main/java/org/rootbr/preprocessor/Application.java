@@ -44,24 +44,13 @@ public class Application {
     try (Stream<Path> walk = Files.walk(Paths.get(parse.getOptionValue(PATH_TO_SOURCE)))) {
       walk.filter(f -> Files.isRegularFile(f) && f.toFile().getAbsolutePath().endsWith(".cs"))
           .forEach(f -> pool.execute(() -> {
-            try (Stream<String> stream = Files.lines(f, Charset.forName("UTF-8"))) {
-              processingFile(stream);
+            try {
+              processingFile(f, Charset.forName("UTF-8"));
             } catch (UncheckedIOException e) {
-              try {
-                String encoding = UniversalDetector.detectCharset(f);
-                if (encoding != null) {
-                  log.info("Detected encoding = {} for file: {}", encoding, f);
-                  try (Stream<String> stream = Files.lines(f, Charset.forName(encoding))) {
-                    processingFile(stream);
-                  }
-                } else {
-                  log.warn("No encoding detected for file: {}", f);
-                }
-              } catch (IOException ex) {
-                log.error(e.getMessage(), e);
+              String encoding = detectCharset(f);
+              if (encoding != null) {
+                processingFile(f, Charset.forName(encoding));
               }
-            } catch (IOException e) {
-              log.warn(e.getMessage(), e);
             }
           }));
     } catch (IOException e) {
@@ -70,17 +59,31 @@ public class Application {
     awaitPool(pool);
   }
 
-  private static void processingFile(Stream<String> stream) {
-    stream.forEachOrdered(s -> {
-      Matcher matcher = pattern.matcher(s);
-      if (matcher.find()) {
-        final var numberOfNegation = matcher.group(1).length();
-        final var key = matcher.group(2);
-        if (is(key, numberOfNegation)) {
-          log.info(s);
+  private static String detectCharset(Path f) {
+    try {
+      return UniversalDetector.detectCharset(f);
+    } catch (IOException e) {
+      log.error(e.getMessage(), e);
+    }
+    log.warn("No encoding detected for file: {}", f);
+    return null;
+  }
+
+  private static void processingFile(final Path f, Charset charset) {
+    try (Stream<String> stream = Files.lines(f, charset)) {
+      stream.forEachOrdered(s -> {
+        Matcher matcher = pattern.matcher(s);
+        if (matcher.find()) {
+          final var numberOfNegation = matcher.group(1).length();
+          final var key = matcher.group(2);
+          if (is(key, numberOfNegation)) {
+            log.info(s);
+          }
         }
-      }
-    });
+      });
+    } catch (IOException e) {
+      log.warn(e.getMessage(), e);
+    }
   }
 
   private static void awaitPool(ThreadPoolExecutor pool) {
