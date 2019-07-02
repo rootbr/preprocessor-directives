@@ -1,11 +1,16 @@
 package org.rootbr.preprocessor;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -40,19 +45,40 @@ public class Application {
     final var threads = Runtime.getRuntime().availableProcessors() * 10;
     final var pool = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
 
+    final var rootPathSource = Paths.get(parse.getOptionValue(PATH_TO_SOURCE)).normalize();
 
-    try (Stream<Path> walk = Files.walk(Paths.get(parse.getOptionValue(PATH_TO_SOURCE)))) {
-      walk.filter(f -> Files.isRegularFile(f) && f.toFile().getAbsolutePath().endsWith(".cs"))
+    final var rootPathDestination = Paths.get(parse.getOptionValue(PATH_TO_OUTPUT)).normalize();
+    try (Stream<Path> walk = Files.walk(rootPathSource)) {
+      walk.filter(Files::isRegularFile)
           .forEach(f -> pool.execute(() -> {
-            try {
-              processingFile(f, Charset.forName("UTF-8"));
-            } catch (UncheckedIOException e) {
-              String encoding = detectCharset(f);
-              if (encoding != null) {
-                processingFile(f, Charset.forName(encoding));
+                final var to = rootPathDestination.resolve(f.subpath(rootPathSource.getNameCount(), f.getNameCount()));
+                Path parentDir = to.getParent();
+                if (!Files.exists(parentDir)) {
+                  try {
+                    Files.createDirectories(parentDir);
+                  } catch (IOException e) {
+                    log.error(e.getMessage(), e);
+                  }
+                }
+
+                if (f.toFile().getAbsolutePath().endsWith(".cs")) {
+                  try {
+                    processingFile(f, to, UTF_8);
+                  } catch (UncheckedIOException e) {
+                    String encoding = detectCharset(f);
+                    if (encoding != null) {
+                      processingFile(f, to, Charset.forName(encoding));
+                    }
+                  }
+                } else {
+                  try {
+                    Files.copy(f, to, StandardCopyOption.REPLACE_EXISTING);
+                  } catch (IOException e) {
+                    log.warn(e.getMessage(), e);
+                  }
+                }
               }
-            }
-          }));
+          ));
     } catch (IOException e) {
       log.error(e.getMessage(), e);
     }
@@ -69,9 +95,16 @@ public class Application {
     return null;
   }
 
-  private static void processingFile(final Path f, Charset charset) {
+  private static void processingFile(final Path f, final Path t, Charset charset) {
     try (Stream<String> stream = Files.lines(f, charset)) {
+      final BufferedWriter writer = Files.newBufferedWriter(t, charset, StandardOpenOption.CREATE);
       stream.forEachOrdered(s -> {
+        try {
+          writer.write(s);
+          writer.newLine();
+        } catch (IOException e) {
+          log.error(e.getMessage(), e);
+        }
         Matcher matcher = pattern.matcher(s);
         if (matcher.find()) {
           final var numberOfNegation = matcher.group(1).length();
@@ -81,6 +114,7 @@ public class Application {
           }
         }
       });
+      writer.close();
     } catch (IOException e) {
       log.warn(e.getMessage(), e);
     }

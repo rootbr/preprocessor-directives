@@ -1,5 +1,7 @@
 package org.rootbr.preprocessor;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +14,7 @@ public class DefinedSymbols {
 
   public DefinedSymbols(final String path) throws IOException {
     try (InputStream input = new FileInputStream(path)) {
-      properties.load(new InputStreamReader(input, Charset.forName("UTF-8")));
+      properties.load(new InputStreamReader(input, UTF_8));
     }
   }
 
