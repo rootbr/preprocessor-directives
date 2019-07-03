@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ import org.slf4j.LoggerFactory;
 public class ProcessingFile {
   private static final Logger log = LoggerFactory.getLogger(ProcessingFile.class);
 
-  private final DefinedSymbols definedSymbols;
+  private final Properties properties;
 
   private static final Pattern patternIf =
       Pattern.compile("^[\\s\\t]*#if[\\s\\t]+(!*?)(\\w+?)[\\s\\t]*$");
@@ -26,16 +27,15 @@ public class ProcessingFile {
   private static final Pattern patternEnd =
       Pattern.compile("^[\\s\\t]*#endif[\\s\\t]*$");
 
-  public ProcessingFile(final String pathToDefinedSymbols) throws IOException {
-    this.definedSymbols = new DefinedSymbols(pathToDefinedSymbols);
+  public ProcessingFile(Properties properties) {
+    this.properties = properties;
   }
+
 
   public void processingFile(final Path f, final Path t, Charset charset) {
     try {
       final var lines = Files.readAllLines(f, charset);
-
       executeDirective(lines, f.toString());
-
       try (BufferedWriter writer = Files.newBufferedWriter(t, charset, StandardOpenOption.CREATE)) {
         Files.write(t, lines, charset);
       }
@@ -54,7 +54,6 @@ public class ProcessingFile {
       if (!matchIf) {
         Matcher matcherIf = patternIf.matcher(s);
         if (matcherIf.find()) {
-          log.info("{} was found directive #if", f);
           iterator.remove();
           matchIf = true;
           needWrite = is(matcherIf.group(2), matcherIf.group(1).length());
@@ -82,7 +81,7 @@ public class ProcessingFile {
   }
 
   private boolean is(String key, int numberOfNegation) {
-    var b = definedSymbols.prop(key);
+    var b = Boolean.parseBoolean(properties.getProperty(key));
     while (numberOfNegation-- > 0) {
       b = !b;
     }

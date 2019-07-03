@@ -2,13 +2,17 @@ package org.rootbr.preprocessor;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +37,12 @@ public class Application {
 
     CommandLine parse = parseCommandLine(args);
 
-    final var processingFile = new ProcessingFile(parse.getOptionValue(PATH_TO_DEFINED_SYMBOLS));
+    Properties properties;
+    try (InputStream input = new FileInputStream(parse.getOptionValue(PATH_TO_DEFINED_SYMBOLS))) {
+      properties = new Properties();
+      properties.load(new InputStreamReader(input, UTF_8));
+    }
+    final var processingFile = new ProcessingFile(properties);
 
     final var threads = Runtime.getRuntime().availableProcessors() * 10;
     final var pool = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
