@@ -46,6 +46,7 @@ public class ProcessingFile {
 
   public void executeDirective(List<String> lines, String f) {
     var matchIf = false;
+    var hasTrueCondition = false;
     var needWrite = true;
 
     final var iterator = lines.iterator();
@@ -57,22 +58,44 @@ public class ProcessingFile {
           iterator.remove();
           matchIf = true;
           needWrite = is(matcherIf.group(2), matcherIf.group(1).length());
+          hasTrueCondition = needWrite;
         }
       } else {
-        Matcher matcherElseIf = patternElseIf.matcher(s);
-        if (patternEnd.matcher(s).matches()) {
-          iterator.remove();
-          matchIf = false;
-          needWrite = true;
-        } else if (patternElse.matcher(s).matches()) {
-          iterator.remove();
-          needWrite = !needWrite;
-        } else if (matcherElseIf.find()) {
-          iterator.remove();
-          needWrite = !needWrite && is(matcherElseIf.group(2), matcherElseIf.group(1).length());
-        } else if (!needWrite) {
-          iterator.remove();
+        if (hasTrueCondition) {
+          Matcher matcherElseIf = patternElseIf.matcher(s);
+          if (patternEnd.matcher(s).matches()) {
+            iterator.remove();
+            matchIf = false;
+            hasTrueCondition = false;
+            needWrite = true;
+          } else if (patternElse.matcher(s).matches()) {
+            iterator.remove();
+            needWrite = !needWrite;
+          } else if (matcherElseIf.find()) {
+            iterator.remove();
+            needWrite = false;
+          } else if (!needWrite) {
+            iterator.remove();
+          }
+        } else {
+          Matcher matcherElseIf = patternElseIf.matcher(s);
+          if (patternEnd.matcher(s).matches()) {
+            iterator.remove();
+            matchIf = false;
+            hasTrueCondition = false;
+            needWrite = true;
+          } else if (patternElse.matcher(s).matches()) {
+            iterator.remove();
+            needWrite = !needWrite;
+          } else if (matcherElseIf.find()) {
+            iterator.remove();
+            needWrite = !needWrite && is(matcherElseIf.group(2), matcherElseIf.group(1).length());
+            hasTrueCondition = needWrite;
+          } else if (!needWrite) {
+            iterator.remove();
+          }
         }
+
       }
     }
     if (matchIf) {

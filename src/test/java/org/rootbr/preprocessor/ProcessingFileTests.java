@@ -77,8 +77,18 @@ class ProcessingFileTests {
     }
 
     @Test
-    @DisplayName("тело ложного #elif не выводится")
+    @DisplayName("тело второго истиного #elif (предыдущий #elif ложный) выводится")
     public void test4() {
+      List<String> lines = builderLines.falseElif().trueElif().withBody().endIf();
+
+      processing.executeDirective(lines, null);
+
+      assertThat(lines).containsExactly(BODY);
+    }
+
+    @Test
+    @DisplayName("тело ложного #elif не выводится")
+    public void test5() {
       List<String> lines = builderLines.falseElif().withBody().endIf();
 
       processing.executeDirective(lines, null);
@@ -88,7 +98,7 @@ class ProcessingFileTests {
 
     @Test
     @DisplayName("тело #else выводится")
-    public void test5() {
+    public void test6() {
       List<String> lines = builderLines.else_().withBody().endIf();
 
       processing.executeDirective(lines, null);
@@ -128,8 +138,18 @@ class ProcessingFileTests {
     }
 
     @Test
-    @DisplayName("тело ложного #elif не выводится")
+    @DisplayName("тело второго истиного #elif не выводится")
     public void test2() {
+      List<String> lines = builderLines.trueElif().trueElif().withBody().endIf();
+
+      processing.executeDirective(lines, null);
+
+      assertThat(lines).doesNotContain(BODY);
+    }
+
+    @Test
+    @DisplayName("тело ложного #elif не выводится")
+    public void test3() {
       List<String> lines = builderLines.falseElif().withBody().endIf();
 
       processing.executeDirective(lines, null);
@@ -139,7 +159,7 @@ class ProcessingFileTests {
 
     @Test
     @DisplayName("тело #else не выводится")
-    public void test3() {
+    public void test4() {
       List<String> lines = builderLines.else_().withBody().endIf();
 
       processing.executeDirective(lines, null);
