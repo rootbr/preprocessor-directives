@@ -52,6 +52,7 @@ public class ProcessingFile {
     final var iterator = lines.iterator();
     while (iterator.hasNext()) {
       final var s = iterator.next();
+      //TODO перейти на стек чтобы учитываться предыдущие важные структуры, например, начатый комментарий или текст
       if (!matchIf) {
         Matcher matcherIf = patternIf.matcher(s);
         if (matcherIf.find()) {
