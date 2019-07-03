@@ -69,7 +69,7 @@ public class ProcessingFile {
           needWrite = !needWrite;
         } else if (matcherElseIf.find()) {
           iterator.remove();
-          needWrite = is(matcherElseIf.group(2), matcherElseIf.group(1).length());
+          needWrite = !needWrite && is(matcherElseIf.group(2), matcherElseIf.group(1).length());
         } else if (!needWrite) {
           iterator.remove();
         }

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -48,21 +49,47 @@ class ProcessingFileTests {
   @Nested
   @DisplayName("когда передаем директиву #if с неверным уловием")
   class Tests1{
+    BuilderLines builderLines;
+
+    @BeforeEach
+    public void setUp() {
+      builderLines = builder().falseIf();
+    }
 
     @Test
     @DisplayName("тело if не выводится")
     public void test2() {
-      List<String> lines = builder().falseIf().withBody().endIf();
+      List<String> lines = builderLines.withBody().endIf();
 
       processing.executeDirective(lines, null);
 
-      assertThat(lines).isEmpty();
+      assertThat(lines).doesNotContain(BODY);
+    }
+
+    @Test
+    @DisplayName("тело истиного #elif выводится")
+    public void test3() {
+      List<String> lines = builderLines.trueElif().withBody().endIf();
+
+      processing.executeDirective(lines, null);
+
+      assertThat(lines).containsExactly(BODY);
+    }
+
+    @Test
+    @DisplayName("тело ложного #elif не выводится")
+    public void test4() {
+      List<String> lines = builderLines.falseElif().withBody().endIf();
+
+      processing.executeDirective(lines, null);
+
+      assertThat(lines).doesNotContain(BODY);
     }
 
     @Test
     @DisplayName("тело #else выводится")
-    public void test3() {
-      List<String> lines = builder().falseIf().else_().withBody().endIf();
+    public void test5() {
+      List<String> lines = builderLines.else_().withBody().endIf();
 
       processing.executeDirective(lines, null);
 
@@ -73,10 +100,17 @@ class ProcessingFileTests {
   @Nested
   @DisplayName("когда передаем директиву #if с верным уловием")
   class Tests2 {
+    BuilderLines builderLines;
+
+    @BeforeEach
+    public void setUp() {
+      builderLines = builder().trueIf();
+    }
+
     @Test
     @DisplayName("тело if выводится")
-    public void test4() {
-      List<String> lines = builder().trueIf().withBody().endIf();
+    public void test0() {
+      List<String> lines = builderLines.withBody().endIf();
 
       processing.executeDirective(lines, null);
 
@@ -84,13 +118,33 @@ class ProcessingFileTests {
     }
 
     @Test
-    @DisplayName("тело #else не выводится")
-    public void test3() {
-      List<String> lines = builder().trueIf().else_().withBody().endIf();
+    @DisplayName("тело истиного #elif не выводится")
+    public void test1() {
+      List<String> lines = builderLines.trueElif().withBody().endIf();
 
       processing.executeDirective(lines, null);
 
-      assertThat(lines).isEmpty();
+      assertThat(lines).doesNotContain(BODY);
+    }
+
+    @Test
+    @DisplayName("тело ложного #elif не выводится")
+    public void test2() {
+      List<String> lines = builderLines.falseElif().withBody().endIf();
+
+      processing.executeDirective(lines, null);
+
+      assertThat(lines).doesNotContain(BODY);
+    }
+
+    @Test
+    @DisplayName("тело #else не выводится")
+    public void test3() {
+      List<String> lines = builderLines.else_().withBody().endIf();
+
+      processing.executeDirective(lines, null);
+
+      assertThat(lines).doesNotContain(BODY);
     }
   }
 }
