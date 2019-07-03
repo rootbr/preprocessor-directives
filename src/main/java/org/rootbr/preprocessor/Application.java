@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,15 +54,10 @@ public class Application {
           .forEach(f -> pool.execute(() -> {
                 final var to = rootPathDestination.resolve(f.subpath(rootPathSource.getNameCount(), f.getNameCount()));
                 createParentFolderIfNotExist(to);
-
                 if (f.toFile().getAbsolutePath().endsWith(".cs")) {
-                  try {
-                    processingFile.processingFile(f, to, UTF_8);
-                  } catch (UncheckedIOException e) {
-                    String encoding = detectCharset(f);
-                    if (encoding != null) {
-                      processingFile.processingFile(f, to, Charset.forName(encoding));
-                    }
+                  String encoding = detectCharset(f);
+                  if (encoding != null) {
+                    processingFile.processingFile(f, to, Charset.forName(encoding));
                   }
                 } else {
                   try {

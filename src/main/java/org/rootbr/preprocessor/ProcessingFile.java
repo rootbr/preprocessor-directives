@@ -19,13 +19,13 @@ public class ProcessingFile {
   private final Properties properties;
 
   private static final Pattern patternIf =
-      Pattern.compile("^[\\s\\t]*#if[\\s\\t]+(!*?)(\\w+?)[\\s\\t]*$");
+      Pattern.compile("^[\\s\\t]*#if[\\s\\t]+(!*?)(\\w+?)[\\s\\t]*(//.*)*(/\\*.*)*$");
   private static final Pattern patternElseIf =
-      Pattern.compile("^[\\s\\t]*#elif[\\s\\t]+(!*?)(\\w+?)[\\s\\t]*$");
+      Pattern.compile("^[\\s\\t]*#elif[\\s\\t]+(!*?)(\\w+?)[\\s\\t]*(//.*)*(/\\*.*)*$");
   private static final Pattern patternElse =
-      Pattern.compile("^[\\s\\t]*#else[\\s\\t]*$");
+      Pattern.compile("^[\\s\\t]*#else[\\s\\t]*(//.*)*(/\\*.*)*$");
   private static final Pattern patternEnd =
-      Pattern.compile("^[\\s\\t]*#endif[\\s\\t]*$");
+      Pattern.compile("^[\\s\\t]*#endif[\\s\\t]*(//.*)*(/\\*.*)*$");
 
   public ProcessingFile(Properties properties) {
     this.properties = properties;
