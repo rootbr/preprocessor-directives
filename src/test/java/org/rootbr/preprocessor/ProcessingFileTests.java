@@ -47,7 +47,7 @@ class ProcessingFileTests {
   }
 
   @Nested
-  @DisplayName("когда передаем директиву #if с неверным уловием")
+  @DisplayName("когда передаем директиву #if с неверным условием")
   class Tests1{
     BuilderLines builderLines;
 
