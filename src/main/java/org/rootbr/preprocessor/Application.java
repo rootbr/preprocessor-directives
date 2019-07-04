@@ -57,7 +57,7 @@ public class Application {
                 if (f.toFile().getAbsolutePath().endsWith(".cs")) {
                   String encoding = detectCharset(f);
                   if (encoding != null) {
-                    processingFile.processingFile(f, to, Charset.forName(encoding));
+                    processingFile.processingCSharpFile(f, to, Charset.forName(encoding));
                   }
                 } else {
                   try {

@@ -1,15 +1,15 @@
 package org.rootbr.preprocessor;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,27 +18,16 @@ public class ProcessingFile {
 
   private final Properties properties;
 
-  private static final Pattern patternIf =
-      Pattern.compile("^[\\s\\t]*#if[\\s\\t]+(!*?)(\\w+?)[\\s\\t]*(//.*)*(/\\*.*)*$");
-  private static final Pattern patternElseIf =
-      Pattern.compile("^[\\s\\t]*#elif[\\s\\t]+(!*?)(\\w+?)[\\s\\t]*(//.*)*(/\\*.*)*$");
-  private static final Pattern patternElse =
-      Pattern.compile("^[\\s\\t]*#else[\\s\\t]*(//.*)*(/\\*.*)*$");
-  private static final Pattern patternEnd =
-      Pattern.compile("^[\\s\\t]*#endif[\\s\\t]*(//.*)*(/\\*.*)*$");
-
   public ProcessingFile(Properties properties) {
     this.properties = properties;
   }
 
 
-  public void processingFile(final Path f, final Path t, Charset charset) {
+  public void processingCSharpFile(final Path f, final Path t, Charset charset) {
     try {
       final var lines = Files.readAllLines(f, charset);
       executeDirective(lines, f.toString());
-      try (BufferedWriter writer = Files.newBufferedWriter(t, charset, StandardOpenOption.CREATE)) {
-        Files.write(t, lines, charset);
-      }
+      Files.write(t, lines, charset, StandardOpenOption.CREATE);
     } catch (IOException e) {
       log.warn(e.getMessage(), e);
     }
@@ -50,26 +39,29 @@ public class ProcessingFile {
     var needWrite = true;
 
     final var iterator = lines.iterator();
+    //TODO перейти на стек/очередь чтобы учитывать предыдущие важные структуры, например, начатый комментарий или сырой текст
+    Deque<KeyWord> deque = new ArrayDeque<>();
     while (iterator.hasNext()) {
       final var s = iterator.next();
-      //TODO перейти на стек чтобы учитываться предыдущие важные структуры, например, начатый комментарий или текст
       if (!matchIf) {
-        Matcher matcherIf = patternIf.matcher(s);
+        Matcher matcherIf = KeyWord.IF.matcher(s);
         if (matcherIf.find()) {
           iterator.remove();
           matchIf = true;
+          deque.push(KeyWord.IF);
           needWrite = is(matcherIf.group(2), matcherIf.group(1).length());
           hasTrueCondition = needWrite;
         }
       } else {
         if (hasTrueCondition) {
-          Matcher matcherElseIf = patternElseIf.matcher(s);
-          if (patternEnd.matcher(s).matches()) {
+          Matcher matcherElseIf = KeyWord.ELSE_IF.matcher(s);
+          if (KeyWord.ENDIF.matcher(s).matches()) {
             iterator.remove();
             matchIf = false;
+            deque.pop();
             hasTrueCondition = false;
             needWrite = true;
-          } else if (patternElse.matcher(s).matches()) {
+          } else if (KeyWord.ELSE.matcher(s).matches()) {
             iterator.remove();
             needWrite = !needWrite;
           } else if (matcherElseIf.find()) {
@@ -79,13 +71,14 @@ public class ProcessingFile {
             iterator.remove();
           }
         } else {
-          Matcher matcherElseIf = patternElseIf.matcher(s);
-          if (patternEnd.matcher(s).matches()) {
+          Matcher matcherElseIf = KeyWord.ELSE_IF.matcher(s);
+          if (KeyWord.ENDIF.matcher(s).matches()) {
             iterator.remove();
             matchIf = false;
+            deque.pop();
             hasTrueCondition = false;
             needWrite = true;
-          } else if (patternElse.matcher(s).matches()) {
+          } else if (KeyWord.ELSE.matcher(s).matches()) {
             iterator.remove();
             needWrite = !needWrite;
           } else if (matcherElseIf.find()) {
@@ -99,7 +92,7 @@ public class ProcessingFile {
 
       }
     }
-    if (matchIf) {
+    if (!deque.isEmpty()) {
       log.warn("{} Directive #if does not have #endif!", f);
     }
   }

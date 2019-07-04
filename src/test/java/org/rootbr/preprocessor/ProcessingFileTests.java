@@ -49,17 +49,17 @@ class ProcessingFileTests {
   @Nested
   @DisplayName("когда передаем директиву #if с неверным условием")
   class Tests1{
-    BuilderLines builderLines;
+    BuilderLines falseIf;
 
     @BeforeEach
     public void setUp() {
-      builderLines = builder().falseIf();
+      falseIf = builder().falseIf();
     }
 
     @Test
     @DisplayName("тело if не выводится")
     public void test2() {
-      List<String> lines = builderLines.withBody().endIf();
+      List<String> lines = falseIf.withBody().endIf();
 
       processing.executeDirective(lines, null);
 
@@ -69,7 +69,7 @@ class ProcessingFileTests {
     @Test
     @DisplayName("тело истиного #elif выводится")
     public void test3() {
-      List<String> lines = builderLines.trueElif().withBody().endIf();
+      List<String> lines = falseIf.trueElif().withBody().endIf();
 
       processing.executeDirective(lines, null);
 
@@ -79,7 +79,7 @@ class ProcessingFileTests {
     @Test
     @DisplayName("тело второго истиного #elif (предыдущий #elif ложный) выводится")
     public void test4() {
-      List<String> lines = builderLines.falseElif().trueElif().withBody().endIf();
+      List<String> lines = falseIf.falseElif().trueElif().withBody().endIf();
 
       processing.executeDirective(lines, null);
 
@@ -89,7 +89,7 @@ class ProcessingFileTests {
     @Test
     @DisplayName("тело ложного #elif не выводится")
     public void test5() {
-      List<String> lines = builderLines.falseElif().withBody().endIf();
+      List<String> lines = falseIf.falseElif().withBody().endIf();
 
       processing.executeDirective(lines, null);
 
@@ -99,7 +99,7 @@ class ProcessingFileTests {
     @Test
     @DisplayName("тело #else выводится")
     public void test6() {
-      List<String> lines = builderLines.else_().withBody().endIf();
+      List<String> lines = falseIf.else_().withBody().endIf();
 
       processing.executeDirective(lines, null);
 
@@ -110,17 +110,17 @@ class ProcessingFileTests {
   @Nested
   @DisplayName("когда передаем директиву #if с верным уловием")
   class Tests2 {
-    BuilderLines builderLines;
+    BuilderLines trueIf;
 
     @BeforeEach
     public void setUp() {
-      builderLines = builder().trueIf();
+      trueIf = builder().trueIf();
     }
 
     @Test
     @DisplayName("тело if выводится")
     public void test0() {
-      List<String> lines = builderLines.withBody().endIf();
+      List<String> lines = trueIf.withBody().endIf();
 
       processing.executeDirective(lines, null);
 
@@ -130,7 +130,7 @@ class ProcessingFileTests {
     @Test
     @DisplayName("тело истиного #elif не выводится")
     public void test1() {
-      List<String> lines = builderLines.trueElif().withBody().endIf();
+      List<String> lines = trueIf.trueElif().withBody().endIf();
 
       processing.executeDirective(lines, null);
 
@@ -140,7 +140,7 @@ class ProcessingFileTests {
     @Test
     @DisplayName("тело второго истиного #elif не выводится")
     public void test2() {
-      List<String> lines = builderLines.trueElif().trueElif().withBody().endIf();
+      List<String> lines = trueIf.trueElif().trueElif().withBody().endIf();
 
       processing.executeDirective(lines, null);
 
@@ -150,7 +150,7 @@ class ProcessingFileTests {
     @Test
     @DisplayName("тело ложного #elif не выводится")
     public void test3() {
-      List<String> lines = builderLines.falseElif().withBody().endIf();
+      List<String> lines = trueIf.falseElif().withBody().endIf();
 
       processing.executeDirective(lines, null);
 
@@ -160,7 +160,7 @@ class ProcessingFileTests {
     @Test
     @DisplayName("тело #else не выводится")
     public void test4() {
-      List<String> lines = builderLines.else_().withBody().endIf();
+      List<String> lines = trueIf.else_().withBody().endIf();
 
       processing.executeDirective(lines, null);
 
