@@ -43,28 +43,28 @@ public class ProcessingFile {
 
     final var iterator = lines.iterator();
     //TODO перейти на стек/очередь чтобы учитывать предыдущие важные структуры, например, начатый комментарий или сырой текст
-    Deque<KeyWord> deque = new ArrayDeque<>();
+    Deque<KeyWordsPattern> deque = new ArrayDeque<>();
     while (iterator.hasNext()) {
       final var s = iterator.next();
       if (!matchIf) {
-        Matcher matcherIf = KeyWord.IF.matcher(s);
+        Matcher matcherIf = KeyWordsPattern.IF.matcher(s);
         if (matcherIf.find()) {
           iterator.remove();
           matchIf = true;
-          deque.push(KeyWord.IF);
+          deque.push(KeyWordsPattern.IF);
           needWrite = is(matcherIf.group(2), matcherIf.group(1).length());
           hasTrueCondition = needWrite;
         }
       } else {
         if (hasTrueCondition) {
-          Matcher matcherElseIf = KeyWord.ELSE_IF.matcher(s);
-          if (KeyWord.ENDIF.matcher(s).matches()) {
+          Matcher matcherElseIf = KeyWordsPattern.ELSE_IF.matcher(s);
+          if (KeyWordsPattern.ENDIF.matcher(s).matches()) {
             iterator.remove();
             matchIf = false;
             deque.pop();
             hasTrueCondition = false;
             needWrite = true;
-          } else if (KeyWord.ELSE.matcher(s).matches()) {
+          } else if (KeyWordsPattern.ELSE.matcher(s).matches()) {
             iterator.remove();
             needWrite = !needWrite;
           } else if (matcherElseIf.find()) {
@@ -74,14 +74,14 @@ public class ProcessingFile {
             iterator.remove();
           }
         } else {
-          Matcher matcherElseIf = KeyWord.ELSE_IF.matcher(s);
-          if (KeyWord.ENDIF.matcher(s).matches()) {
+          Matcher matcherElseIf = KeyWordsPattern.ELSE_IF.matcher(s);
+          if (KeyWordsPattern.ENDIF.matcher(s).matches()) {
             iterator.remove();
             matchIf = false;
             deque.pop();
             hasTrueCondition = false;
             needWrite = true;
-          } else if (KeyWord.ELSE.matcher(s).matches()) {
+          } else if (KeyWordsPattern.ELSE.matcher(s).matches()) {
             iterator.remove();
             needWrite = !needWrite;
           } else if (matcherElseIf.find()) {
