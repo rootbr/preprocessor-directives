@@ -31,7 +31,7 @@ class ProcessingFileTests {
   public void test0() {
     List<String> lines = new ArrayList<>();
 
-    processing.executeDirective(lines, null);
+    processing.executeDirective(lines);
 
     assertThat(lines).isEmpty();
   }
@@ -41,7 +41,7 @@ class ProcessingFileTests {
   public void test1() {
     List<String> lines = builder().trueIf().trueElif().else_().endIf();
 
-    processing.executeDirective(lines, null);
+    processing.executeDirective(lines);
 
     assertThat(lines).isEmpty();
   }
@@ -61,7 +61,7 @@ class ProcessingFileTests {
     public void test2() {
       List<String> lines = falseIf.withBody().endIf();
 
-      processing.executeDirective(lines, null);
+      processing.executeDirective(lines);
 
       assertThat(lines).doesNotContain(BODY);
     }
@@ -71,7 +71,7 @@ class ProcessingFileTests {
     public void test3() {
       List<String> lines = falseIf.trueElif().withBody().endIf();
 
-      processing.executeDirective(lines, null);
+      processing.executeDirective(lines);
 
       assertThat(lines).containsExactly(BODY);
     }
@@ -81,7 +81,7 @@ class ProcessingFileTests {
     public void test4() {
       List<String> lines = falseIf.falseElif().trueElif().withBody().endIf();
 
-      processing.executeDirective(lines, null);
+      processing.executeDirective(lines);
 
       assertThat(lines).containsExactly(BODY);
     }
@@ -91,7 +91,7 @@ class ProcessingFileTests {
     public void test5() {
       List<String> lines = falseIf.falseElif().withBody().endIf();
 
-      processing.executeDirective(lines, null);
+      processing.executeDirective(lines);
 
       assertThat(lines).doesNotContain(BODY);
     }
@@ -101,7 +101,7 @@ class ProcessingFileTests {
     public void test6() {
       List<String> lines = falseIf.else_().withBody().endIf();
 
-      processing.executeDirective(lines, null);
+      processing.executeDirective(lines);
 
       assertThat(lines).containsExactly(BODY);
     }
@@ -122,7 +122,7 @@ class ProcessingFileTests {
     public void test0() {
       List<String> lines = trueIf.withBody().endIf();
 
-      processing.executeDirective(lines, null);
+      processing.executeDirective(lines);
 
       assertThat(lines).containsExactly(BODY);
     }
@@ -132,7 +132,7 @@ class ProcessingFileTests {
     public void test1() {
       List<String> lines = trueIf.trueElif().withBody().endIf();
 
-      processing.executeDirective(lines, null);
+      processing.executeDirective(lines);
 
       assertThat(lines).doesNotContain(BODY);
     }
@@ -142,7 +142,7 @@ class ProcessingFileTests {
     public void test2() {
       List<String> lines = trueIf.trueElif().trueElif().withBody().endIf();
 
-      processing.executeDirective(lines, null);
+      processing.executeDirective(lines);
 
       assertThat(lines).doesNotContain(BODY);
     }
@@ -152,7 +152,7 @@ class ProcessingFileTests {
     public void test3() {
       List<String> lines = trueIf.falseElif().withBody().endIf();
 
-      processing.executeDirective(lines, null);
+      processing.executeDirective(lines);
 
       assertThat(lines).doesNotContain(BODY);
     }
@@ -162,7 +162,7 @@ class ProcessingFileTests {
     public void test4() {
       List<String> lines = trueIf.else_().withBody().endIf();
 
-      processing.executeDirective(lines, null);
+      processing.executeDirective(lines);
 
       assertThat(lines).doesNotContain(BODY);
     }

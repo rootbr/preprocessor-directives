@@ -26,14 +26,17 @@ public class ProcessingFile {
   public void processingCSharpFile(final Path f, final Path t, Charset charset) {
     try {
       final var lines = Files.readAllLines(f, charset);
-      executeDirective(lines, f.toString());
+      final var s = executeDirective(lines);
+      if (s != null) {
+        log.warn("file {} is wrong ({})", f.toString(), s);
+      }
       Files.write(t, lines, charset, StandardOpenOption.CREATE);
     } catch (IOException e) {
       log.warn(e.getMessage(), e);
     }
   }
 
-  public void executeDirective(List<String> lines, String f) {
+  public String executeDirective(List<String> lines) {
     var matchIf = false;
     var hasTrueCondition = false;
     var needWrite = true;
@@ -93,7 +96,9 @@ public class ProcessingFile {
       }
     }
     if (!deque.isEmpty()) {
-      log.warn("{} Directive #if does not have #endif!", f);
+      return "directive #if does not have #endif";
+    } else {
+      return null;
     }
   }
 
