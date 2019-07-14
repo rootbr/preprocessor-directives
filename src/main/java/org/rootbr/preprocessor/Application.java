@@ -52,7 +52,9 @@ public class Application {
     try (Stream<Path> walk = Files.walk(rootPathSource)) {
       walk.filter(Files::isRegularFile)
           .forEach(f -> pool.execute(() -> {
-                final var to = rootPathDestination.resolve(f.subpath(rootPathSource.getNameCount(), f.getNameCount()));
+                final var to = rootPathDestination.resolve(
+                    f.subpath(rootPathSource.getNameCount(), f.getNameCount())
+                );
                 createParentFolderIfNotExist(to);
                 if (f.toFile().getAbsolutePath().endsWith(".cs")) {
                   String encoding = detectCharset(f);

@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import org.slf4j.Logger;
@@ -45,11 +46,11 @@ public class ProcessingFile {
   public String executeDirective(List<String> lines) {
     final var iterator = lines.iterator();
     Deque<ElementWrapper> deque = new ArrayDeque<>();
-    int i = 0;
+
     while (iterator.hasNext()) {
 
       final var s = iterator.next();
-i++;
+
       if (deque.isEmpty()) {
         if (findStartAndPush(s, deque)) {
           iterator.remove();
@@ -106,14 +107,17 @@ i++;
   }
 
   private boolean processingElseIf(String s, Deque<ElementWrapper> deque) {
+
+
     final var matcherElseIf = KeyPattern.ELSE_IF.start(s);
     if (matcherElseIf.find()) {
-      final var condition = !deque.peek().wasTrueCondition
+      final var peek = Objects.requireNonNull(deque.peek());
+      final var condition = !peek.wasTrueCondition
           && condition(matcherElseIf.group(2), matcherElseIf.group(1).length());
       deque.push(new ElementWrapper(
           KeyPattern.ELSE_IF,
           condition,
-          deque.peek().wasTrueCondition || condition
+          peek.wasTrueCondition || condition
       ));
       return true;
     }
@@ -123,7 +127,8 @@ i++;
   private boolean processingElse(String s, Deque<ElementWrapper> deque) {
     final var matcherElse = KeyPattern.ELSE.start(s);
     if (matcherElse.find()) {
-      deque.push(new ElementWrapper(KeyPattern.ELSE, !deque.peek().needWrite));
+      final var peek = Objects.requireNonNull(deque.peek());
+      deque.push(new ElementWrapper(KeyPattern.ELSE, !peek.needWrite));
       return true;
     }
     return false;
@@ -132,7 +137,7 @@ i++;
   private boolean processinEndIf(String s, Deque<ElementWrapper> deque) {
     final var matcherEnd = IF.end(s);
     if (matcherEnd.find()) {
-      while (deque.peek().key != IF) {
+      while (Objects.requireNonNull(deque.peek()).key != IF) {
         deque.pop();
       }
       deque.pop();
