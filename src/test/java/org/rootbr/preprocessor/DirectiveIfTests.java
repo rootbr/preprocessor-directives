@@ -4,12 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-public class WhenLinesContentOfStartComment {
+public class DirectiveIfTests {
   @Test
   public void test0() {
-    final String comment = "/*" + KeyWordsPattern.IF.keyWord() + " true";
+    final String comment = "/*#if true";
 
-    final var matcher = KeyWordsPattern.COMMENT_START.matcher(comment);
+    final var matcher = KeyWordsPattern.IF.matcher(comment);
 
     assertThat(matcher.find()).isFalse();
   }

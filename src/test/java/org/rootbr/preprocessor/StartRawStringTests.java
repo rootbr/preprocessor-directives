@@ -56,4 +56,34 @@ public class StartRawStringTests {
 
     assertThat(matcher.find()).isTrue();
   }
+
+  @Test
+  @DisplayName("когда в строке начинается комментарий в одну строку, тогда начало raw-string не находится")
+  public void test7() {
+    final String line = "//var a = \"/\" + @\"";
+
+    final var matcher = KeyWordsPattern.RAW_STRING_START.matcher(line);
+
+    assertThat(matcher.find()).isFalse();
+  }
+
+  @Test
+  @DisplayName("когда в строке встречается слэш, тогда начало raw-string находится")
+  public void test8() {
+    final String line = "var a = \"/\" + @\"";
+
+    final var matcher = KeyWordsPattern.RAW_STRING_START.matcher(line);
+
+    assertThat(matcher.find()).isTrue();
+  }
+
+  @Test
+  @DisplayName("когда в строке начинается комментарий в одну строку, тогда начало raw-string не находится")
+  public void test9() {
+    final String line = "/* */@\"";
+
+    final var matcher = KeyWordsPattern.RAW_STRING_START.matcher(line);
+
+    assertThat(matcher.find()).isTrue();
+  }
 }

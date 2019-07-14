@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 public enum KeyWordsPattern {
   RAW_STRING_START(
       "@\"",
-      "^.*"
+      "^.*?"
           + "@\""
           + Constants.ODD_NUMBER_OF_QUOTES
           + "$"
@@ -18,12 +18,12 @@ public enum KeyWordsPattern {
           + ".*$"
   ),
   COMMENT_START(
-      "\"*",
-      ".*@\"/*"
+      "/*",
+      "/\\*.*$"
   ),
   COMMENT_END(
       "*\"",
-      "/*\""
+      "^.*\\*/"
   ),
   IF(
       "#if",
@@ -80,7 +80,8 @@ public enum KeyWordsPattern {
   }
 
   public Matcher matcher(String s) {
-    return pattern.matcher(s);
+    final var stringWithoutComments = s.replaceAll(Constants.DELETE_COMMENTS_IN_STRING, "");
+    return pattern.matcher(stringWithoutComments);
   }
 
   private static class Constants {
@@ -88,5 +89,6 @@ public enum KeyWordsPattern {
     static final String ANY_NUMBER_WHITESPACE_OR_TABS_CHARACTER = "[\\s\\t]*";
     static final String ONE_LINE_COMMENT = "(//.*)*";
     static final String LINES_COMMENT = "(/\\*.*)*";
+    static final String DELETE_COMMENTS_IN_STRING = "(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)";
   }
 }
