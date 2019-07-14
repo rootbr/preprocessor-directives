@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 @DisplayName("Когда заканчивается необработанная строка")
 public class EndRawStringTests {
   @Test
-  @DisplayName("конец raw-string находится")
+  @DisplayName("end-raw-string находится")
   public void test2() {
     final String line = "\"";
 
@@ -18,9 +18,9 @@ public class EndRawStringTests {
   }
 
   @Test
-  @DisplayName("конец raw-string находится даже в строке c raw-string")
+  @DisplayName("после повторного start-raw-string - end-raw-string находится")
   public void test3() {
-    final String line = "\" + @\"any text\" @\"\"";
+    final String line = "\" + @\"any text\" + @\"\" + @\"";
 
     final var matcher = KeyWordsPattern.RAW_STRING_END.matcher(line);
 
@@ -29,9 +29,9 @@ public class EndRawStringTests {
 
 
   @Test
-  @DisplayName("когда в строке raw-string идёт экранированные двойные кавычки, тогда конец raw-string находится")
+  @DisplayName("после экранированные двойные кавычки - end-raw-string находится")
   public void test5() {
-    final String line = "\"\"word\"\" is escaped\"\"\"";
+    final String line = "\"\"word\"\"\"\" is escaped\"\"\"";
 
     final var matcher = KeyWordsPattern.RAW_STRING_END.matcher(line);
 
