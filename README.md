@@ -89,7 +89,12 @@ gradle build
 ```
 
 ```
---path-to-source /home/aleksei/RiderProjects/roslyn  --path-to-output /home/aleksei/roslyn-results --path-to-defined-symbols tests/defined-symbols.properties
+--path-to-source /home/aleksei/RiderProjects/roslyn  --path-to-output /home/aleksei/RiderProjects/roslyn-results --path-to-defined-symbols tests/defined-symbols.properties
+```
+
+если не хватает стэка, то увеличить через опцию JVM
+```
+-Xss10m
 ```
 
 ## License

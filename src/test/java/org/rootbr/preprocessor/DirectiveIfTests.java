@@ -11,7 +11,7 @@ public class DirectiveIfTests {
   public void test0() {
     final String comment = "/* #if true";
 
-    final var matcher = KeyWordsPattern.IF.matcher(comment);
+    final var matcher = KeyPattern.IF.start(comment);
 
     assertThat(matcher.find()).isFalse();
   }
@@ -21,7 +21,7 @@ public class DirectiveIfTests {
   public void test1() {
     final String comment = "// #if true";
 
-    final var matcher = KeyWordsPattern.IF.matcher(comment);
+    final var matcher = KeyPattern.IF.start(comment);
 
     assertThat(matcher.find()).isFalse();
   }
@@ -31,7 +31,7 @@ public class DirectiveIfTests {
   public void test2() {
     final String comment = "#if true //";
 
-    final var matcher = KeyWordsPattern.IF.matcher(comment);
+    final var matcher = KeyPattern.IF.start(comment);
 
     assertThat(matcher.find()).isTrue();
   }
@@ -41,7 +41,7 @@ public class DirectiveIfTests {
   public void test3() {
     final String comment = "#if true /*";
 
-    final var matcher = KeyWordsPattern.IF.matcher(comment);
+    final var matcher = KeyPattern.IF.start(comment);
 
     assertThat(matcher.find()).isTrue();
   }

@@ -12,7 +12,7 @@ public class StartRawStringTests {
   public void test2() {
     final String line = "var test = @\"";
 
-    final var matcher = KeyWordsPattern.RAW_STRING_START.matcher(line);
+    final var matcher = KeyPattern.RAW_STRING.start(line);
 
     assertThat(matcher.find()).isTrue();
   }
@@ -22,7 +22,7 @@ public class StartRawStringTests {
   public void test3() {
     final String line = "@\"any text\" + @\"";
 
-    final var matcher = KeyWordsPattern.RAW_STRING_START.matcher(line);
+    final var matcher = KeyPattern.RAW_STRING.start(line);
 
     assertThat(matcher.find()).isTrue();
   }
@@ -32,7 +32,17 @@ public class StartRawStringTests {
   public void test4() {
     final String line = "@\"any text\"";
 
-    final var matcher = KeyWordsPattern.RAW_STRING_START.matcher(line);
+    final var matcher = KeyPattern.RAW_STRING.start(line);
+
+    assertThat(matcher.find()).isFalse();
+  }
+
+  @Test
+  @DisplayName("после end-raw-string - start-raw-string не находится")
+  public void test40() {
+    final String line = "private const string LocalRegistryPath = @\"Roslyn\\Internal\\Analyzers\\AB\\Vsix\\\";";
+
+    final var matcher = KeyPattern.RAW_STRING.start(line);
 
     assertThat(matcher.find()).isFalse();
   }
@@ -42,7 +52,7 @@ public class StartRawStringTests {
   public void test5() {
     final String line = "@\"this \"\"word\"\"\"\" is escaped";
 
-    final var matcher = KeyWordsPattern.RAW_STRING_START.matcher(line);
+    final var matcher = KeyPattern.RAW_STRING.start(line);
 
     assertThat(matcher.find()).isTrue();
   }
@@ -52,7 +62,7 @@ public class StartRawStringTests {
   public void test7() {
     final String line = "//var a = \"/\" + @\"";
 
-    final var matcher = KeyWordsPattern.RAW_STRING_START.matcher(line);
+    final var matcher = KeyPattern.RAW_STRING.start(line);
 
     assertThat(matcher.find()).isFalse();
   }
@@ -62,7 +72,7 @@ public class StartRawStringTests {
   public void test8() {
     final String line = "var a = \"/\" /* + @\"";
 
-    final var matcher = KeyWordsPattern.RAW_STRING_START.matcher(line);
+    final var matcher = KeyPattern.RAW_STRING.start(line);
 
     assertThat(matcher.find()).isTrue();
   }
@@ -72,7 +82,7 @@ public class StartRawStringTests {
   public void test9() {
     final String line = "var a = \"/\" + /* comment */ @\"";
 
-    final var matcher = KeyWordsPattern.RAW_STRING_START.matcher(line);
+    final var matcher = KeyPattern.RAW_STRING.start(line);
 
     assertThat(matcher.find()).isTrue();
   }
