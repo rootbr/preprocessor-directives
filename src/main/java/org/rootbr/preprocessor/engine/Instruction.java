@@ -12,7 +12,7 @@ public class Instruction {
   public Instruction(KeyPattern key, int lineNumber, String line) {
     this.key = key;
     this.lineNumber = lineNumber;
-    this.needWrite = false;
+    this.needWrite = true;
     this.wasTrueCondition = false;
     this.line = line;
   }
@@ -25,7 +25,9 @@ public class Instruction {
     this.line = line;
   }
 
-  public Instruction(KeyPattern key, boolean needWrite, boolean wasTrueCondition, int lineNumber, String line) {
+  public Instruction(
+      KeyPattern key, boolean needWrite, boolean wasTrueCondition, int lineNumber, String line
+  ) {
     this.key = key;
     this.needWrite = needWrite;
     this.wasTrueCondition = wasTrueCondition;

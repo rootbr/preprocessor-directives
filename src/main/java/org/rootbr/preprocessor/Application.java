@@ -14,8 +14,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.rootbr.preprocessor.engine.workers.DirectiveProcessingAndCopyWorker;
 import org.rootbr.preprocessor.engine.FileProcessingEngine;
+import org.rootbr.preprocessor.engine.workers.DirectiveProcessingAndCopyWorker;
 import org.rootbr.preprocessor.engine.workers.Workers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,7 @@ public class Application {
         Paths.get(parse.getOptionValue(PATH_TO_OUTPUT)).normalize()
     );
 
-    log.warn("time of processing is {} ms", (System.nanoTime() - start) / 1_000_000L);
+    log.info("time of processing is {} ms", (System.nanoTime() - start) / 1_000_000L);
   }
 
   private static CommandLine parseCommandLine(String[] args) {

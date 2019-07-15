@@ -12,7 +12,6 @@ public enum KeyPattern {
       "/\\*.*?$",
       "^.*\\*/"
   ),
-  // TODO разные источники дают разную информацию по синтаксису, вроде как можно //-комментарий в конце и разделять пробелами (без табов) вначале и между
   IF(
       "^" + Constants.SEPARATOR + "*"
           + "#if"
@@ -76,6 +75,7 @@ public enum KeyPattern {
     static final String ONE_LINE_COMMENT = "(//.*)*";
     static final String DELETE_COMMENTS_IN_STRING = "(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)";
     static final String DELETE_RAW_STRING_IN_STRING = "(?:@\"(?:[^\"]|(?:\"{1}[^*/]))*\"{1})";
-    static final String DELETE_STRING_IN_QUOTES = "((['\"])(?:(?!\\2|\\\\).|\\\\.)*\\2)|\\/\\/[^\\n]*|\\/\\*(?:[^*]|\\*(?!\\/))*\\*\\/";
+    static final String DELETE_STRING_IN_QUOTES =
+        "((['\"])(?:(?!\\2|\\\\).|\\\\.)*\\2)|//[^\\n]*|/\\*(?:[^*]|\\*(?!/))*\\*/";
   }
 }

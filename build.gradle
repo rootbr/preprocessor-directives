@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'org.rootbr'
-version '0.1-SNAPSHOT'
+version '1.0'
 
 sourceCompatibility = 11
 
@@ -18,12 +18,40 @@ test {
     useJUnitPlatform()
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.rootbr.preprocessor.Application'
+    }
+}
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Implementation-Version': version,
+                'Main-Class': 'org.rootbr.preprocessor.Application'
+    }
+    baseName = project.name + '-all'
+    from {
+        configurations.runtimeClasspath.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    with jar
+}
+
 tasks.withType(com.github.spotbugs.SpotBugsTask) {
     reports.xml.enabled = false
     reports.html.enabled = true
 }
 
 pmd {
+    ignoreFailures = true
+}
+
+spotbugsMain {
+    ignoreFailures = true
+}
+
+spotbugsTest {
     ignoreFailures = true
 }
 

@@ -13,8 +13,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
-import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -34,7 +34,7 @@ public class DirectiveProcessingAndCopyWorker implements Worker {
   }
 
   @Override
-  public void processinFile(Path from, Path to) {
+  public void processingFile(Path from, Path to) {
     final var charset = detectCharset(from);
     try {
       final var lines = Files.readAllLines(from, charset);
@@ -65,59 +65,43 @@ public class DirectiveProcessingAndCopyWorker implements Worker {
     }
   }
 
-  static class ResultProcessing {
+  static final class ResultProcessing {
     public final String message;
     public final boolean isSuccess;
-    public final boolean wasProcessed;
 
-    private ResultProcessing(String message, boolean isSuccess, boolean wasProcessed) {
+    private ResultProcessing(String message, boolean isSuccess) {
       this.message = message;
       this.isSuccess = isSuccess;
-      this.wasProcessed = wasProcessed;
     }
   }
 
   public ResultProcessing processingDirective(List<String> lines) {
-    boolean wasProcessed = false;
     final var iterator = lines.listIterator();
     Deque<Instruction> deque = new ArrayDeque<>();
     while (iterator.hasNext()) {
-      final var i = iterator.nextIndex();
-      final var s = iterator.next();
+      final var line = iterator.next();
       if (deque.isEmpty()) {
-        if (findStartAndPush(i, s, deque)) {
-          wasProcessed = true;
-          iterator.remove();
-        }
+        processingStartInstruction(iterator, line, deque);
       } else {
         final var peek = deque.peek();
         switch (peek.getKey()) {
           case RAW_STRING:
           case COMMENT:
-            if (!findEndAndPop(i, peek.getKey().end(s), deque)) {
-              removeLineIfNecessary(iterator, deque);
-            } else {
-              log.debug("end {}=\"{}\"", peek.getKey(), s);
-            }
+            processingEndInstructionsCommentOrRawString(iterator, line, peek.getKey(), deque);
             break;
 
           case ELSE:
-            if (processingEndIf(s, deque)) {
-              iterator.remove();
-            } else {
+            if (!processingEndInstructionIf(iterator, line, deque)) {
               removeLineIfNecessary(iterator, deque);
             }
             break;
 
           case IF:
           case ELSE_IF:
-            if (processingEndIf(s, deque)) {
-              iterator.remove();
-            } else if (processingElse(i, s, deque)) {
-              iterator.remove();
-            } else if (processingElseIf(i, s, deque)) {
-              iterator.remove();
-            } else {
+            if (!processingEndInstructionIf(iterator, line, deque)
+                && !processingElse(iterator, line, deque)
+                && !processingElseIf(iterator, line, deque)
+            ) {
               removeLineIfNecessary(iterator, deque);
             }
             break;
@@ -128,22 +112,22 @@ public class DirectiveProcessingAndCopyWorker implements Worker {
         deque.isEmpty()
             ? "was processed successfully"
             : "was processed unsuccessfully: " + Arrays.toString(deque.toArray()),
-        deque.isEmpty(),
-        wasProcessed
+        deque.isEmpty()
     );
   }
 
-  private void removeLineIfNecessary(Iterator<String> iterator, Deque<Instruction> deque) {
-    if (!deque.isEmpty()
-        && (deque.peek().getKey() == IF || deque.peek().getKey() == ELSE || deque.peek().getKey() == ELSE_IF)
-        && !deque.peek().isNeedWrite()
-    ) {
+  private void removeLineIfNecessary(ListIterator iterator, Deque<Instruction> deque) {
+    if (!deque.isEmpty() && !deque.peek().isNeedWrite()) {
       iterator.remove();
     }
   }
 
-  private boolean processingElseIf(int number, String s, Deque<Instruction> deque) {
-    final var matcherElseIf = ELSE_IF.start(s);
+  private boolean processingElseIf(
+      final ListIterator iterator,
+      final String line,
+      final Deque<Instruction> deque
+  ) {
+    final var matcherElseIf = ELSE_IF.start(line);
     if (matcherElseIf.find()) {
       final var peek = Objects.requireNonNull(deque.peek());
       final var condition = !peek.isWasTrueCondition()
@@ -152,82 +136,96 @@ public class DirectiveProcessingAndCopyWorker implements Worker {
           ELSE_IF,
           condition,
           peek.isWasTrueCondition() || condition,
-          number,
-          s
+          iterator.previousIndex(),
+          line
       ));
+      iterator.remove();
       return true;
     }
     return false;
   }
 
-  private boolean processingElse(int number, String s, Deque<Instruction> deque) {
-    final var matcherElse = ELSE.start(s);
+  private boolean processingElse(
+      final ListIterator iterator,
+      final String line,
+      final Deque<Instruction> deque
+  ) {
+    final var matcherElse = ELSE.start(line);
     if (matcherElse.find()) {
       final var peek = Objects.requireNonNull(deque.peek());
-      deque.push(new Instruction(ELSE, !peek.isNeedWrite(), number, s));
+      deque.push(new Instruction(ELSE, !peek.isNeedWrite(), iterator.previousIndex(), line));
+      iterator.remove();
       return true;
     }
     return false;
   }
 
-  private boolean processingEndIf(String s, Deque<Instruction> deque) {
-    final var matcherEnd = IF.end(s);
+  private boolean processingEndInstructionIf(
+      final ListIterator iterator,
+      final String line,
+      final Deque<Instruction> deque
+  ) {
+    final var matcherEnd = IF.end(line);
     if (matcherEnd.find()) {
       while (Objects.requireNonNull(deque.peek()).getKey() != IF) {
         deque.pop();
       }
       deque.pop();
+      iterator.remove();
       return true;
     }
     return false;
   }
 
-  private boolean findStartAndPush(
-      int number, final String s, final Deque<Instruction> deque
+  private void processingEndInstructionsCommentOrRawString(
+      final ListIterator iterator,
+      final String line,
+      final KeyPattern pattern,
+      final Deque<Instruction> deque
   ) {
-    if (KeyPattern.COMMENT.start(s).find()) {
-      deque.push(new Instruction(KeyPattern.COMMENT, number, s));
-      log.debug("start COMMENT=\"{}\"", s);
-      return false;
-    }
-
-    if (KeyPattern.RAW_STRING.start(s).find()) {
-      deque.push(new Instruction(KeyPattern.RAW_STRING, number, s));
-      log.debug("start RAW_STRING=\"{}\"", s);
-      return false;
-    }
-
-    final var matcher = IF.start(s);
-    if (matcher.find()) {
-      log.debug("start IF=\"{}\"", s);
-      deque.push(new Instruction(
-          IF,
-          condition(matcher.group(2), matcher.group(1).length()),
-          number,
-          s
-      ));
-      return true;
-    }
-    return false;
-  }
-
-  private boolean findEndAndPop(
-      int number, final Matcher matcher, final Deque<Instruction> deque
-  ) {
+    Matcher matcher = pattern.end(line);
     if (matcher.find()) {
       deque.pop();
 
       final var s = matcher.replaceAll("");
       if (KeyPattern.COMMENT.start(s).find()) {
-        deque.push(new Instruction(KeyPattern.COMMENT, number, s));
+        deque.push(new Instruction(KeyPattern.COMMENT, iterator.previousIndex(), line));
       }
 
       if (KeyPattern.RAW_STRING.start(s).find()) {
-        deque.push(new Instruction(KeyPattern.RAW_STRING, number, s));
+        deque.push(new Instruction(KeyPattern.RAW_STRING, iterator.previousIndex(), line));
       }
-      return true;
     } else {
-      return false;
+      removeLineIfNecessary(iterator, deque);
+    }
+  }
+
+  private void processingStartInstruction(
+      final ListIterator iterator,
+      final String line,
+      final Deque<Instruction> deque
+  ) {
+
+    if (KeyPattern.COMMENT.start(line).find()) {
+      deque.push(new Instruction(KeyPattern.COMMENT, iterator.previousIndex(), line));
+      log.debug("start COMMENT=\"{}\"", line);
+
+    } else if (KeyPattern.RAW_STRING.start(line).find()) {
+      deque.push(new Instruction(KeyPattern.RAW_STRING, iterator.previousIndex(), line));
+      log.debug("start RAW_STRING=\"{}\"", line);
+
+    } else {
+      final var matcher = IF.start(line);
+      if (matcher.find()) {
+        deque.push(new Instruction(
+            IF,
+            condition(matcher.group(2), matcher.group(1).length()),
+            iterator.previousIndex(),
+            line
+        ));
+        log.debug("start IF=\"{}\"", line);
+        iterator.remove();
+      }
     }
   }
 

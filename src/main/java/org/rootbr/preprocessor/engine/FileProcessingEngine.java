@@ -32,7 +32,7 @@ public class FileProcessingEngine {
                     from.subpath(folderSource.getNameCount(), from.getNameCount())
                 );
                 createParentFolderIfNotExist(to);
-                workers.getWorker(from).processinFile(from, to);
+                workers.getWorker(from).processingFile(from, to);
               }
           ));
     } catch (IOException e) {
@@ -51,7 +51,6 @@ public class FileProcessingEngine {
       }
     }
   }
-
 
   private void awaitPool(ThreadPoolExecutor pool) {
     pool.shutdown();

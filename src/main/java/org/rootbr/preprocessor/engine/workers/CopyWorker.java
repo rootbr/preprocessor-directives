@@ -11,7 +11,7 @@ public class CopyWorker implements Worker {
   private static final Logger log = LoggerFactory.getLogger(CopyWorker.class);
 
   @Override
-  public void processinFile(Path from, Path to) {
+  public void processingFile(Path from, Path to) {
     try {
       Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
     } catch (IOException e) {

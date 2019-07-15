@@ -60,9 +60,6 @@ ES_BUILD_STANDALONE=true
 m_provider = provider;
 ```
 
-
-
-
 Для тестов можно использовать проект
 
 https://github.com/dotnet/roslyn
@@ -74,7 +71,7 @@ https://github.com/dotnet/roslyn
 Для сборки проекта необходимы JDK11:
 * [JDK11](https://jdk.java.net/java-se-ri/11)
 
-Gradle:
+Gradle версии > 5:
 * [Gradle](https://gradle.org/install/#manually)
 
 ```
@@ -85,17 +82,19 @@ gradle -version
 Сборка
 
 ```
-gradle build
+gradle clean fatJar
 ```
 
+Запуск
+
 ```
---path-to-source /home/aleksei/RiderProjects/roslyn  --path-to-output /home/aleksei/RiderProjects/roslyn-results --path-to-defined-symbols tests/defined-symbols.properties
+java -jar -Xss10m ./build/libs/preprocessor-directives-all-1.0.jar --path-to-source /home/aleksei/RiderProjects/source/roslyn  --path-to-output /home/aleksei/RiderProjects/results/roslyn --path-to-defined-symbols ./tests/defined-symbols.properties
 ```
 
-если не хватает стэка, то увеличить через опцию JVM
-```
--Xss10m
-```
+PS:
+1. defined symbols должно определять и такие варианты как: true=true или True=true, в соответствии с поребностями
+2. исходными файлами c# считаем файлы с расширением "cs". Например, файлы vb не обрабатываем.
+3. в формате директивы допускаются только пробелы, ! (может быть несколько), и single-comment в конце, например, "   #if    !!!!true      // single-comment"
 
 ## License
 
