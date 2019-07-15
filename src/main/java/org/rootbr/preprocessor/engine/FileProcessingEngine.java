@@ -22,8 +22,9 @@ public class FileProcessingEngine {
   }
 
   public void processingFolder(Path folderSource, Path folderDestination) {
-    final var threads = Runtime.getRuntime().availableProcessors() * 10;
-    final var pool = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
+    final var pool = (ThreadPoolExecutor) Executors.newFixedThreadPool(
+        Runtime.getRuntime().availableProcessors()
+    );
     try (Stream<Path> walk = Files.walk(folderSource)) {
       walk.filter(Files::isRegularFile)
           .forEach(from -> pool.execute(() -> {
