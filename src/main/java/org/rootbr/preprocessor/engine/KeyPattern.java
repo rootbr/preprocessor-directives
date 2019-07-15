@@ -1,4 +1,4 @@
-package org.rootbr.preprocessor;
+package org.rootbr.preprocessor.engine;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -12,40 +12,30 @@ public enum KeyPattern {
       "/\\*.*?$",
       "^.*\\*/"
   ),
+  // TODO разные источники дают разную информацию по синтаксису, вроде как можно //-комментарий в конце и разделять пробелами (без табов) вначале и между
   IF(
-      "^"
-          + Constants.ANY_NUMBER_WHITESPACE_OR_TABS_CHARACTER
-          + "#if[\\s\\t]+(!*?)(\\w+?)"
-          + Constants.ANY_NUMBER_WHITESPACE_OR_TABS_CHARACTER
-          + Constants.ONE_LINE_COMMENT
-          + Constants.LINES_COMMENT
-          + "$",
-      "^"
-          + Constants.ANY_NUMBER_WHITESPACE_OR_TABS_CHARACTER
+      "^" + Constants.SEPARATOR + "*"
+          + "#if"
+          + Constants.SEPARATOR + "+"
+          + "(!*?)(\\w+?)"
+          + Constants.SEPARATOR + "*" + Constants.ONE_LINE_COMMENT + "$",
+      "^" + Constants.SEPARATOR + "*"
           + "#endif"
-          + Constants.ANY_NUMBER_WHITESPACE_OR_TABS_CHARACTER
-          + Constants.ONE_LINE_COMMENT
-          + Constants.LINES_COMMENT
-          + "$"
+          + Constants.SEPARATOR + "*" + Constants.ONE_LINE_COMMENT + "$"
   ),
   ELSE_IF(
-      "^"
-          + Constants.ANY_NUMBER_WHITESPACE_OR_TABS_CHARACTER
-          + "#elif[\\s\\t]+(!*?)(\\w+?)"
-          + Constants.ANY_NUMBER_WHITESPACE_OR_TABS_CHARACTER
-          + Constants.ONE_LINE_COMMENT
-          + Constants.LINES_COMMENT
-          + "$",
+      "^" + Constants.SEPARATOR + "*"
+          + "#elif"
+          + Constants.SEPARATOR + "+"
+          + "(!*?)(\\w+?)"
+          + Constants.SEPARATOR + "*" + Constants.ONE_LINE_COMMENT + "$",
       null
   ),
   ELSE(
       "^"
-          + Constants.ANY_NUMBER_WHITESPACE_OR_TABS_CHARACTER
+          + Constants.SEPARATOR + "*"
           + "#else"
-          + Constants.ANY_NUMBER_WHITESPACE_OR_TABS_CHARACTER
-          + Constants.ONE_LINE_COMMENT
-          + Constants.LINES_COMMENT
-          + "$",
+          + Constants.SEPARATOR + "*" + Constants.ONE_LINE_COMMENT + "$",
       null
   );
 
@@ -81,10 +71,9 @@ public enum KeyPattern {
   }
 
   private static class Constants {
+    static final String SEPARATOR = "[\\s]";
     static final String ODD_NUMBER_OF_QUOTES = "([^\"]|^)\"(\"\")*(?!\")";
-    static final String ANY_NUMBER_WHITESPACE_OR_TABS_CHARACTER = "[\\s\\t]*";
     static final String ONE_LINE_COMMENT = "(//.*)*";
-    static final String LINES_COMMENT = "(/\\*.*)*";
     static final String DELETE_COMMENTS_IN_STRING = "(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)";
     static final String DELETE_RAW_STRING_IN_STRING = "(?:@\"(?:[^\"]|(?:\"{1}[^*/]))*\"{1})";
     static final String DELETE_STRING_IN_QUOTES = "((['\"])(?:(?!\\2|\\\\).|\\\\.)*\\2)|\\/\\/[^\\n]*|\\/\\*(?:[^*]|\\*(?!\\/))*\\*\\/";

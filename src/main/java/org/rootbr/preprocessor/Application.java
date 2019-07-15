@@ -6,23 +6,17 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Properties;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.mozilla.universalchardet.UniversalDetector;
+import org.rootbr.preprocessor.engine.workers.DirectiveProcessingAndCopyWorker;
+import org.rootbr.preprocessor.engine.FileProcessingEngine;
+import org.rootbr.preprocessor.engine.workers.Workers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,84 +26,26 @@ public class Application {
   private static final String PATH_TO_DEFINED_SYMBOLS = "path-to-defined-symbols";
   private static final String PATH_TO_OUTPUT = "path-to-output";
 
+  private static final Properties properties = new Properties();
+
   public static void main(String[] args) throws IOException {
 
     long start = System.nanoTime();
+
     CommandLine parse = parseCommandLine(args);
 
-    Properties properties;
     try (InputStream input = new FileInputStream(parse.getOptionValue(PATH_TO_DEFINED_SYMBOLS))) {
-      properties = new Properties();
       properties.load(new InputStreamReader(input, UTF_8));
     }
-    final var processingFile = new ProcessingFile(properties);
 
-    final var threads = Runtime.getRuntime().availableProcessors() * 10;
-    final var pool = (ThreadPoolExecutor) Executors.newFixedThreadPool(threads);
+    final var workers = new Workers(new DirectiveProcessingAndCopyWorker(properties));
 
-    final var rootPathSource = Paths.get(parse.getOptionValue(PATH_TO_SOURCE)).normalize();
+    new FileProcessingEngine(workers).processingFolder(
+        Paths.get(parse.getOptionValue(PATH_TO_SOURCE)).normalize(),
+        Paths.get(parse.getOptionValue(PATH_TO_OUTPUT)).normalize()
+    );
 
-    final var rootPathDestination = Paths.get(parse.getOptionValue(PATH_TO_OUTPUT)).normalize();
-    try (Stream<Path> walk = Files.walk(rootPathSource)) {
-      walk.filter(Files::isRegularFile)
-          .forEach(f -> pool.execute(() -> {
-                final var to = rootPathDestination.resolve(
-                    f.subpath(rootPathSource.getNameCount(), f.getNameCount())
-                );
-                createParentFolderIfNotExist(to);
-                if (f.toFile().getAbsolutePath().endsWith(".cs")) {
-                  String encoding = detectCharset(f);
-                  if (encoding != null) {
-                    processingFile.processingCSharpFile(f, to, Charset.forName(encoding));
-                  }
-                } else {
-                  try {
-                    Files.copy(f, to, StandardCopyOption.REPLACE_EXISTING);
-                  } catch (IOException e) {
-                    log.warn(e.getMessage(), e);
-                  }
-                }
-              }
-          ));
-    } catch (IOException e) {
-      log.error(e.getMessage(), e);
-    }
-    awaitPool(pool);
-    log.info("time of processing is {} ms", (System.nanoTime() - start) / 1_000_000L);
-  }
-
-  private static void createParentFolderIfNotExist(Path to) {
-    Path parentDir = to.getParent();
-    if (!Files.exists(parentDir)) {
-      try {
-        Files.createDirectories(parentDir);
-      } catch (IOException e) {
-        log.error(e.getMessage(), e);
-      }
-    }
-  }
-
-  private static String detectCharset(Path f) {
-    try {
-      return UniversalDetector.detectCharset(f);
-    } catch (IOException e) {
-      log.error(e.getMessage(), e);
-    }
-    log.warn("No encoding detected for file: {}", f);
-    return null;
-  }
-
-
-  private static void awaitPool(ThreadPoolExecutor pool) {
-    pool.shutdown();
-    try {
-      if (!pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)) {
-        pool.shutdownNow();
-      }
-    } catch (InterruptedException ex) {
-      pool.shutdownNow();
-      Thread.currentThread().interrupt();
-    }
+    log.warn("time of processing is {} ms", (System.nanoTime() - start) / 1_000_000L);
   }
 
   private static CommandLine parseCommandLine(String[] args) {

@@ -13,9 +13,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.rootbr.preprocessor.engine.workers.DirectiveProcessingAndCopyWorker;
 
 class ProcessingFileTests {
-  static ProcessingFile processing;
+  static DirectiveProcessingAndCopyWorker worker;
 
   @BeforeAll
   static void setUp() throws IOException {
@@ -23,7 +24,7 @@ class ProcessingFileTests {
     properties.put("PROPERTY_TRUE", "true");
     properties.put("PROPERTY_FALSE", "false");
     properties.put("PROPERTY_ANY", "any");
-    processing = new ProcessingFile(properties);
+    worker = new DirectiveProcessingAndCopyWorker(properties);
   }
 
   @Test
@@ -31,7 +32,7 @@ class ProcessingFileTests {
   public void test0() {
     List<String> lines = new ArrayList<>();
 
-    processing.executeDirective(lines);
+    worker.processingDirective(lines);
 
     assertThat(lines).isEmpty();
   }
@@ -41,7 +42,7 @@ class ProcessingFileTests {
   public void test1() {
     List<String> lines = builder().trueIf().trueElif().else_().endIf();
 
-    processing.executeDirective(lines);
+    worker.processingDirective(lines);
 
     assertThat(lines).isEmpty();
   }
@@ -61,7 +62,7 @@ class ProcessingFileTests {
     public void test2() {
       List<String> lines = falseIf.withBody().endIf();
 
-      processing.executeDirective(lines);
+      worker.processingDirective(lines);
 
       assertThat(lines).doesNotContain(BODY);
     }
@@ -71,7 +72,7 @@ class ProcessingFileTests {
     public void test3() {
       List<String> lines = falseIf.trueElif().withBody().endIf();
 
-      processing.executeDirective(lines);
+      worker.processingDirective(lines);
 
       assertThat(lines).containsExactly(BODY);
     }
@@ -81,7 +82,7 @@ class ProcessingFileTests {
     public void test4() {
       List<String> lines = falseIf.falseElif().trueElif().withBody().endIf();
 
-      processing.executeDirective(lines);
+      worker.processingDirective(lines);
 
       assertThat(lines).containsExactly(BODY);
     }
@@ -91,7 +92,7 @@ class ProcessingFileTests {
     public void test5() {
       List<String> lines = falseIf.falseElif().withBody().endIf();
 
-      processing.executeDirective(lines);
+      worker.processingDirective(lines);
 
       assertThat(lines).doesNotContain(BODY);
     }
@@ -101,7 +102,7 @@ class ProcessingFileTests {
     public void test6() {
       List<String> lines = falseIf.else_().withBody().endIf();
 
-      processing.executeDirective(lines);
+      worker.processingDirective(lines);
 
       assertThat(lines).containsExactly(BODY);
     }
@@ -122,7 +123,7 @@ class ProcessingFileTests {
     public void test0() {
       List<String> lines = trueIf.withBody().endIf();
 
-      processing.executeDirective(lines);
+      worker.processingDirective(lines);
 
       assertThat(lines).containsExactly(BODY);
     }
@@ -132,7 +133,7 @@ class ProcessingFileTests {
     public void test1() {
       List<String> lines = trueIf.trueElif().withBody().endIf();
 
-      processing.executeDirective(lines);
+      worker.processingDirective(lines);
 
       assertThat(lines).doesNotContain(BODY);
     }
@@ -142,7 +143,7 @@ class ProcessingFileTests {
     public void test2() {
       List<String> lines = trueIf.trueElif().trueElif().withBody().endIf();
 
-      processing.executeDirective(lines);
+      worker.processingDirective(lines);
 
       assertThat(lines).doesNotContain(BODY);
     }
@@ -152,7 +153,7 @@ class ProcessingFileTests {
     public void test3() {
       List<String> lines = trueIf.falseElif().withBody().endIf();
 
-      processing.executeDirective(lines);
+      worker.processingDirective(lines);
 
       assertThat(lines).doesNotContain(BODY);
     }
@@ -162,7 +163,7 @@ class ProcessingFileTests {
     public void test4() {
       List<String> lines = trueIf.else_().withBody().endIf();
 
-      processing.executeDirective(lines);
+      worker.processingDirective(lines);
 
       assertThat(lines).doesNotContain(BODY);
     }
