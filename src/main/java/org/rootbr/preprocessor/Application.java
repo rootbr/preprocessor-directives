@@ -34,6 +34,7 @@ public class Application {
 
   public static void main(String[] args) throws IOException {
 
+    long start = System.nanoTime();
     CommandLine parse = parseCommandLine(args);
 
     Properties properties;
@@ -74,6 +75,7 @@ public class Application {
       log.error(e.getMessage(), e);
     }
     awaitPool(pool);
+    log.info("time of processing is {} ms", (System.nanoTime() - start) / 1_000_000L);
   }
 
   private static void createParentFolderIfNotExist(Path to) {
