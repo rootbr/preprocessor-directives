@@ -185,19 +185,31 @@ public class DirectiveProcessingAndCopyWorker implements Worker {
   ) {
     Matcher matcher = pattern.end(line);
     if (matcher.find()) {
+      log.debug("end {}=\"{}\"", pattern, line);
       deque.pop();
 
       final var s = matcher.replaceAll("");
       if (KeyPattern.COMMENT.start(s).find()) {
         deque.push(new Instruction(KeyPattern.COMMENT, iterator.previousIndex(), s));
-        iterator.remove();
-        iterator.add(s);
-      }
-
-      if (KeyPattern.RAW_STRING.start(s).find()) {
+        log.debug("start COMMENT=\"{}\"", line);
+      } else if (KeyPattern.RAW_STRING.start(s).find()) {
         deque.push(new Instruction(KeyPattern.RAW_STRING, iterator.previousIndex(), s));
-        iterator.remove();
-        iterator.add(s);
+        log.debug("start RAW_STRING=\"{}\"", line);
+      } else {
+        final var matcher2 = IF.start(s);
+        if (matcher2.find()) {
+          deque.push(new Instruction(
+              IF,
+              condition(matcher2.group(2), matcher2.group(1).length()),
+              iterator.previousIndex(),
+              line
+          ));
+          log.debug("start IF=\"{}\"", line);
+          iterator.remove();
+          final var end = pattern.end(line);
+          end.find();
+          iterator.add(end.group());
+        }
       }
     } else {
       removeLineIfNecessary(iterator, deque);

@@ -16,8 +16,17 @@ public class BuilderLines {
     return lines;
   }
 
+  public List<String> build() {
+    return lines;
+  }
+
   public BuilderLines trueIf() {
     lines.add("#if PROPERTY_TRUE");
+    return this;
+  }
+
+  public BuilderLines multilineCommentWithIf() {
+    lines.add("/**/#if PROPERTY_TRUE");
     return this;
   }
 
@@ -28,6 +37,11 @@ public class BuilderLines {
 
   public BuilderLines endMultilineCommentWithIf() {
     lines.add("*/ #if PROPERTY_FALSE");
+    return this;
+  }
+
+  public BuilderLines endMultilineComment() {
+    lines.add("*/");
     return this;
   }
 

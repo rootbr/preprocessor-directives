@@ -70,7 +70,7 @@ public enum KeyPattern {
   }
 
   private static class Constants {
-    static final String SEPARATOR = "[\\s]";
+    static final String SEPARATOR = "[\\s\\t]";
     static final String ODD_NUMBER_OF_QUOTES = "([^\"]|^)\"(\"\")*(?!\")";
     static final String ONE_LINE_COMMENT = "(//.*)*";
     static final String DELETE_COMMENTS_IN_STRING = "(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)";

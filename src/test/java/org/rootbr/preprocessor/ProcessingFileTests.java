@@ -6,6 +6,8 @@ import static org.rootbr.preprocessor.BuilderLines.builder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import org.junit.jupiter.api.BeforeAll;
@@ -28,9 +30,19 @@ class ProcessingFileTests {
   }
 
   @Test
-  @DisplayName("когда передаем на обработку пустой список, тогда выводится пустой список")
+  @DisplayName("после конца многострочного комметария #if работает")
   public void test0() {
     List<String> lines = builder().startMultilineComment().withBody().endMultilineCommentWithIf().endIf();
+
+    worker.processingDirective(lines);
+
+    assertThat(lines).isEqualTo(builder().startMultilineComment().withBody().endMultilineComment().build());
+  }
+
+  @Test
+  @DisplayName("многострочного комметарий в строке с директивой удалится")
+  public void test02() {
+    List<String> lines = new ArrayList<>(Arrays.asList("/**/#if true", "#endif"));
 
     worker.processingDirective(lines);
 
@@ -38,7 +50,7 @@ class ProcessingFileTests {
   }
 
   @Test
-  @DisplayName("после конца многострочного комметария #if работает")
+  @DisplayName("когда передаем на обработку пустой список, тогда выводится пустой список")
   public void test01() {
     List<String> lines = new ArrayList<>();
 
