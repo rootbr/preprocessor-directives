@@ -1,7 +1,6 @@
 package org.rootbr.preprocessor;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class BuilderLines {
@@ -19,6 +18,16 @@ public class BuilderLines {
 
   public BuilderLines trueIf() {
     lines.add("#if PROPERTY_TRUE");
+    return this;
+  }
+
+  public BuilderLines startMultilineComment() {
+    lines.add("/*");
+    return this;
+  }
+
+  public BuilderLines endMultilineCommentWithIf() {
+    lines.add("*/ #if PROPERTY_FALSE");
     return this;
   }
 

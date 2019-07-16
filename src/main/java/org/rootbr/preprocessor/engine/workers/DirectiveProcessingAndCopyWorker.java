@@ -189,11 +189,15 @@ public class DirectiveProcessingAndCopyWorker implements Worker {
 
       final var s = matcher.replaceAll("");
       if (KeyPattern.COMMENT.start(s).find()) {
-        deque.push(new Instruction(KeyPattern.COMMENT, iterator.previousIndex(), line));
+        deque.push(new Instruction(KeyPattern.COMMENT, iterator.previousIndex(), s));
+        iterator.remove();
+        iterator.add(s);
       }
 
       if (KeyPattern.RAW_STRING.start(s).find()) {
-        deque.push(new Instruction(KeyPattern.RAW_STRING, iterator.previousIndex(), line));
+        deque.push(new Instruction(KeyPattern.RAW_STRING, iterator.previousIndex(), s));
+        iterator.remove();
+        iterator.add(s);
       }
     } else {
       removeLineIfNecessary(iterator, deque);

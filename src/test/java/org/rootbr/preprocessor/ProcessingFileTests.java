@@ -30,6 +30,16 @@ class ProcessingFileTests {
   @Test
   @DisplayName("когда передаем на обработку пустой список, тогда выводится пустой список")
   public void test0() {
+    List<String> lines = builder().startMultilineComment().withBody().endMultilineCommentWithIf().endIf();
+
+    worker.processingDirective(lines);
+
+    assertThat(lines).isEmpty();
+  }
+
+  @Test
+  @DisplayName("после конца многострочного комметария #if работает")
+  public void test01() {
     List<String> lines = new ArrayList<>();
 
     worker.processingDirective(lines);
